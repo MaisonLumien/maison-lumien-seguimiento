@@ -1,0 +1,40 @@
+name: Enviar notificación por correo
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  send-email:
+    runs-on: ubuntu-latest
+    if: contains(github.event.issue.labels.*.name, '📦 Recibido') || contains(github.event.issue.labels.*.name, '🚚 Envío') || contains(github.event.issue.labels.*.name, '✅ Entregado')
+    
+    steps:
+      - name: Extraer datos
+        id: extract
+        run: |
+          echo "EMAIL=stithvalle14@gmail.com" >> $GITHUB_ENV
+          echo "NOMBRE=Cliente Prueba" >> $GITHUB_ENV
+          echo "TRACKING=${{ github.event.issue.title }}" >> $GITHUB_ENV
+          echo "ESTADO=recibido" >> $GITHUB_ENV
+      
+      - name: Enviar correo
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: 📦 Tu pedido ha sido recibido
+          to: ${{ env.EMAIL }}
+          from: Maison Lumien Facturación
+          html_body: |
+            <!DOCTYPE html>
+            <html>
+            <body>
+                <h2>Hola Cliente Prueba,</h2>
+                <p>Hemos recibido tu producto en nuestras oficinas.</p>
+                <p><strong>Número de seguimiento:</strong> ${{ env.TRACKING }}</p>
+                <p>Consulta tu pedido: https://maisonlumien.github.io/maison-lumien-seguimiento/seguimiento.html?track=${{ env.TRACKING }}</p>
+            </body>
+            </html>
