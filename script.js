@@ -1,7 +1,7 @@
 // script.js - Lógica del sistema de seguimiento
 
 // Configuración
-const GITHUB_USER = 'TU_USUARIO_DE_GITHUB'; // ⚠️ CAMBIA ESTO POR TU USUARIO
+const GITHUB_USER = 'MaisonLumien'; // ⚠️ CAMBIA ESTO POR TU USUARIO
 const GITHUB_REPO = 'maison-lumien-seguimiento';
 const GITHUB_TOKEN = null; // No necesitas token para consultas públicas
 
@@ -195,4 +195,5 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         initIndex();
     }
+
 });
