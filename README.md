@@ -1,94 +1,32 @@
-# .github/workflows/enviar-correo.yml
-name: Enviar notificación por correo
+# Maison Lumien - Sistema de Seguimiento de Envíos
 
-on:
-  issues:
-    types: [opened, edited]
+![Logo](https://via.placeholder.com/200x80/4F46E5/ffffff?text=MAISON+LUMIEN)
 
-jobs:
-  send-email:
-    runs-on: ubuntu-latest
-    if: contains(github.event.issue.labels.*.name, '📦 Recibido') || 
-        contains(github.event.issue.labels.*.name, '🚚 Envío') || 
-        contains(github.event.issue.labels.*.name, '✅ Entregado')
-    
-    steps:
-      - name: Extraer datos del Issue
-        id: extract
-        run: |
-          # Extraer email del cuerpo del issue (JSON)
-          BODY='${{ github.event.issue.body }}'
-          EMAIL=$(echo $BODY | grep -o '"email":"[^"]*"' | cut -d'"' -f4)
-          NOMBRE=$(echo $BODY | grep -o '"nombre":"[^"]*"' | cut -d'"' -f4)
-          TRACKING="${{ github.event.issue.title }}"
-          
-          echo "EMAIL=$EMAIL" >> $GITHUB_ENV
-          echo "NOMBRE=$NOMBRE" >> $GITHUB_ENV
-          echo "TRACKING=$TRACKING" >> $GITHUB_ENV
-          
-          # Determinar estado
-          if [[ "${{ github.event.issue.labels.*.name }}" == *"📦 Recibido"* ]]; then
-            echo "ESTADO=recibido" >> $GITHUB_ENV
-          elif [[ "${{ github.event.issue.labels.*.name }}" == *"🚚 Envío"* ]]; then
-            echo "ESTADO=enviado" >> $GITHUB_ENV
-          elif [[ "${{ github.event.issue.labels.*.name }}" == *"✅ Entregado"* ]]; then
-            echo "ESTADO=entregado" >> $GITHUB_ENV
-          fi
-      
-      - name: Enviar correo
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_PASSWORD }}
-          subject: |
-            ${{ env.ESTADO == 'recibido' && '📦 Tu pedido ha sido recibido' ||
-               env.ESTADO == 'enviado' && '🚚 Tu pedido está en camino' ||
-               env.ESTADO == 'entregado' && '✅ Tu pedido fue entregado' }}
-          to: ${{ env.EMAIL }}
-          from: Maison Lumien Facturación
-          html_body: |
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <style>
-                    body { font-family: 'Inter', sans-serif; background: #f5f5f5; padding: 20px; }
-                    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-                    .header { background: linear-gradient(135deg, #4F46E5, #10B981); padding: 40px; text-align: center; }
-                    .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 300; }
-                    .content { padding: 40px; }
-                    .button { display: inline-block; background: linear-gradient(135deg, #4F46E5, #3730A3); color: white; text-decoration: none; padding: 15px 30px; border-radius: 8px; margin: 20px 0; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>MAISON LUMIEN</h1>
-                        <p style="color: rgba(255,255,255,0.9); margin-top: 10px;">El arte de vivir con luz</p>
-                    </div>
-                    <div class="content">
-                        <h2 style="color: #1F2937;">Hola ${{ env.NOMBRE }},</h2>
-                        
-                        ${{ env.ESTADO == 'recibido' && '<p>Hemos recibido tu producto en nuestras oficinas. Pronto lo enviaremos a tu dirección.</p>' ||
-                           env.ESTADO == 'enviado' && '<p>¡Buenas noticias! Tu producto ya fue enviado a tu dirección.</p>' ||
-                           env.ESTADO == 'entregado' && '<p>Tu producto ha sido entregado exitosamente. Esperamos que lo disfrutes.</p>' }}
-                        
-                        <p><strong>Número de seguimiento:</strong> ${{ env.TRACKING }}</p>
-                        
-                        <p>Puedes consultar el estado de tu pedido aquí:</p>
-                        
-                        <p style="text-align: center;">
-                            <a href="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/seguimiento.html?track=${{ env.TRACKING }}" class="button">
-                                CONSULTAR MI PEDIDO
-                            </a>
-                        </p>
-                        
-                        <p>¿Tienes dudas? Escríbenos por WhatsApp:</p>
-                        <p style="text-align: center;">
-                            <a href="https://wa.me/573024157799" style="color: #25D366; text-decoration: none;">📱 302 415 7799</a>
-                        </p>
-                    </div>
-                </div>
-            </body>
-            </html>
+Sistema de seguimiento de pedidos para clientes de Maison Lumien. Permite consultar el estado de los envíos en tiempo real y recibe notificaciones automáticas por correo electrónico cuando cambia el estado del pedido.
+
+## 🚀 Características
+
+- ✅ **Seguimiento en tiempo real** - Los clientes pueden consultar su pedido con un número de seguimiento
+- ✅ **Notificaciones automáticas** - Correos electrónicos cuando el pedido cambia de estado
+- ✅ **Historial completo** - Línea de tiempo con todos los estados del pedido
+- ✅ **Diseño premium** - Interfaz moderna y responsiva
+- ✅ **WhatsApp integrado** - Botón directo para contactar
+- ✅ **100% gratuito** - Funciona con GitHub Pages y GitHub Actions
+
+## 📦 Cómo funciona
+
+1. **Tú creas un Issue** en GitHub con los datos del pedido y el número de seguimiento
+2. **El cliente recibe un correo** con el enlace de seguimiento
+3. **El cliente consulta** en la web el estado de su pedido
+4. **Tú actualizas el Issue** cuando el pedido cambia de estado
+5. **El cliente recibe otro correo** con la actualización
+
+## 🔧 Tecnologías utilizadas
+
+- **Frontend:** HTML5, CSS3, JavaScript (ES6)
+- **Alojamiento:** GitHub Pages
+- **Base de datos:** GitHub Issues (como BD falsa)
+- **Automatización:** GitHub Actions
+- **Correos:** SMTP de Gmail con contraseña de aplicación
+
+## 📁 Estructura del proyecto
