@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maison Lumien - Seguimiento de pedido</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Fondo con gradiente -->
+    <div class="bg-gradient"></div>
+    
+    <!-- Contenedor principal -->
+    <div class="container">
+        <!-- Logo y título -->
+        <div class="header">
+            <div class="logo">
+                <span class="logo-main">MAISON</span>
+                <span class="logo-secondary">LUMIEN</span>
+            </div>
+            <a href="index.html" class="back-link">← Volver al inicio</a>
+        </div>
+        
+        <!-- Estado del envío -->
+        <div class="tracking-container" id="trackingContainer">
+            <!-- Loading state -->
+            <div class="loading-state" id="loadingState">
+                <div class="spinner"></div>
+                <p>Cargando información de tu pedido...</p>
+            </div>
+            
+            <!-- Error state (oculto por defecto) -->
+            <div class="error-state" id="errorState" style="display: none;">
+                <div class="error-icon">❌</div>
+                <h2>Número de seguimiento no encontrado</h2>
+                <p>Verifica que el número ingresado sea correcto</p>
+                <a href="index.html" class="back-button">Volver al inicio</a>
+            </div>
+            
+            <!-- Success state (oculto por defecto) -->
+            <div class="success-state" id="successState" style="display: none;">
+                <!-- Este contenido se llenará dinámicamente con JavaScript -->
+            </div>
+        </div>
+        
+        <!-- Soporte WhatsApp -->
+        <div class="whatsapp-support">
+            <a href="https://wa.me/573024157799" class="whatsapp-button" target="_blank">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12.036 2.001C6.409 2.001 1.875 6.534 1.875 12.161c0 1.78.462 3.517 1.337 5.034L2 22l4.88-1.238c1.473.8 3.146 1.23 4.904 1.23 5.627 0 10.16-4.534 10.16-10.161S17.663 2 12.036 2zm.125 18.35c-1.52 0-3.007-.404-4.293-1.158l-.307-.184-2.968.763.79-2.895-.2-.319c-.794-1.269-1.216-2.734-1.216-4.253 0-4.36 3.55-7.91 7.91-7.91s7.91 3.55 7.91 7.91-3.55 7.91-7.91 7.91z"/>
+                    <path d="M16.2 13.4c-.3-.1-1.6-.7-1.8-.8-.2-.1-.4-.1-.6.1-.2.2-.6.8-.8 1-.1.2-.3.2-.6.1-.9-.3-1.6-.7-2.2-1.2-.6-.5-1.1-1.1-1.4-1.8-.1-.2 0-.4.1-.5.1-.1.2-.2.3-.3.1-.1.2-.2.2-.3.1-.2.1-.4 0-.6-.1-.1-.6-1.4-.8-1.9-.2-.5-.4-.5-.6-.5h-.5c-.2 0-.4.1-.6.2-.2.2-.7.7-.7 1.7s.8 2.1.9 2.2c.1.1 1.6 2.5 4 3.5 2.4.9 2.4.6 2.8.6.4 0 1.4-.5 1.6-1 .2-.5.2-1 .1-1.1-.1-.1-.2-.1-.5-.2z"/>
+                </svg>
+                ¿Dudas? Contáctanos por WhatsApp
+            </a>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p>© 2026 Maison Lumien. Todos los derechos reservados.</p>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
