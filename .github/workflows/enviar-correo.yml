@@ -15,35 +15,71 @@ jobs:
       contains(github.event.issue.labels.*.name, '✅ Entregado')
     
     steps:
-      - name: Extraer datos del Issue
+      - name: Extraer datos del Issue con Python (más confiable)
         id: extract
         run: |
-          BODY='${{ github.event.issue.body }}'
-          EMAIL=$(echo $BODY | grep -o '"email":"[^"]*"' | cut -d'"' -f4)
-          NOMBRE=$(echo $BODY | grep -o '"nombre":"[^"]*"' | cut -d'"' -f4)
-          TRACKING="${{ github.event.issue.title }}"
+          # Guardar el body en un archivo temporal
+          echo '${{ github.event.issue.body }}' > issue_body.json
           
-          echo "EMAIL=$EMAIL" >> $GITHUB_ENV
-          echo "NOMBRE=$NOMBRE" >> $GITHUB_ENV
-          echo "TRACKING=$TRACKING" >> $GITHUB_ENV
+          # Usar Python para parsear el JSON correctamente
+          python3 << EOF
+          import json
+          import os
           
-          if [[ "${{ github.event.issue.labels.*.name }}" == *"📦 Recibido"* ]]; then
-            echo "ESTADO=recibido" >> $GITHUB_ENV
-          elif [[ "${{ github.event.issue.labels.*.name }}" == *"🚚 Envío"* ]]; then
-            echo "ESTADO=enviado" >> $GITHUB_ENV
-          elif [[ "${{ github.event.issue.labels.*.name }}" == *"✅ Entregado"* ]]; then
-            echo "ESTADO=entregado" >> $GITHUB_ENV
-          fi
+          try:
+              with open('issue_body.json', 'r') as f:
+                  content = f.read()
+              
+              # Limpiar el contenido (a veces viene con escapes)
+              content = content.strip().strip('"\'')
+              
+              data = json.loads(content)
+              
+              email = data.get('cliente', {}).get('email', '')
+              nombre = data.get('cliente', {}).get('nombre', 'Cliente')
+              tracking = '${{ github.event.issue.title }}'
+              
+              # Guardar en GITHUB_ENV
+              with open(os.environ['GITHUB_ENV'], 'a') as env_file:
+                  env_file.write(f"EMAIL={email}\n")
+                  env_file.write(f"NOMBRE={nombre}\n")
+                  env_file.write(f"TRACKING={tracking}\n")
+                  
+                  # Determinar estado
+                  labels = '${{ github.event.issue.labels.*.name }}'
+                  if '📦 Recibido' in labels:
+                      env_file.write("ESTADO=recibido\n")
+                  elif '🚚 Envío' in labels:
+                      env_file.write("ESTADO=enviado\n")
+                  elif '✅ Entregado' in labels:
+                      env_file.write("ESTADO=entregado\n")
+                  
+                  # Detectar si es comentario
+                  if '${{ github.event_name }}' == 'issue_comment':
+                      env_file.write("TIPO_EVENTO=comentario\n")
+                      comentario = '''${{ github.event.comment.body }}'''
+                      # Limitar comentario a 100 chars para asunto
+                      comentario_corto = comentario[:100] + ('...' if len(comentario) > 100 else '')
+                      env_file.write(f"COMENTARIO={comentario}\n")
+                      env_file.write(f"COMENTARIO_CORTO={comentario_corto}\n")
+                  else:
+                      env_file.write("TIPO_EVENTO=issue\n")
+                      
+          except Exception as e:
+              print(f"Error procesando JSON: {e}")
+              # Email por defecto para debugging
+              with open(os.environ['GITHUB_ENV'], 'a') as env_file:
+                  env_file.write("EMAIL=stithvalle14@gmail.com\n")
+                  env_file.write("NOMBRE=Cliente\n")
+                  env_file.write("TRACKING=${{ github.event.issue.title }}\n")
+                  env_file.write("TIPO_EVENTO=issue\n")
+                  env_file.write("ESTADO=recibido\n")
+          EOF
           
-          if [[ "${{ github.event_name }}" == "issue_comment" ]]; then
-            echo "TIPO_EVENTO=comentario" >> $GITHUB_ENV
-            COMENTARIO="${{ github.event.comment.body }}"
-            COMENTARIO_CORTO=$(echo "$COMENTARIO" | cut -c1-100)
-            echo "COMENTARIO=$COMENTARIO" >> $GITHUB_ENV
-            echo "COMENTARIO_CORTO=$COMENTARIO_CORTO" >> $GITHUB_ENV
-          else
-            echo "TIPO_EVENTO=issue" >> $GITHUB_ENV
-          fi
+          # Debug: mostrar valores extraídos
+          echo "📧 Email extraído: ${{ env.EMAIL }}"
+          echo "👤 Nombre: ${{ env.NOMBRE }}"
+          echo "📦 Tracking: ${{ env.TRACKING }}"
       
       - name: Esperar a que GitHub Pages se actualice
         run: sleep 180
@@ -74,7 +110,7 @@ jobs:
                     .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 300; }
                     .content { padding: 40px; }
                     .button { display: inline-block; background: linear-gradient(135deg, #4F46E5, #3730A3); color: white; text-decoration: none; padding: 15px 30px; border-radius: 8px; margin: 20px 0; }
-                    .comentario { background: #f0f0f0; padding: 20px; border-radius: 8px; border-left: 4px solid #4F46E5; margin: 20px 0; }
+                    .comentario { background: #f0f0f0; padding: 20px; border-radius: 8px; border-left: 4px solid #4F46E5; margin: 20px 0; white-space: pre-line; }
                     .fecha { color: #666; font-size: 12px; margin-bottom: 5px; }
                 </style>
             </head>
@@ -95,7 +131,7 @@ jobs:
                         
                         ${{ env.TIPO_EVENTO == 'comentario' && 
                            format('<div class="comentario"><div class="fecha">{0}</div><p>{1}</p></div>', 
-                           github.event.comment.created_at, env.COMENTARIO) || '' }}
+                           '${{ github.event.comment.created_at }}', env.COMENTARIO) || '' }}
                         
                         <p><strong>Número de seguimiento:</strong> ${{ env.TRACKING }}</p>
                         
