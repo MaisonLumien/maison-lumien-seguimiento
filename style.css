@@ -61,7 +61,6 @@ body {
     z-index: 1;
 }
 
-/* Header styles */
 .header {
     display: flex;
     justify-content: space-between;
@@ -112,7 +111,6 @@ body {
     transform: translateX(-5px);
 }
 
-/* Hero section */
 .hero {
     text-align: center;
     margin-bottom: 50px;
@@ -135,7 +133,6 @@ body {
     line-height: 1.6;
 }
 
-/* Search section */
 .search-container {
     max-width: 600px;
     margin: 0 auto 80px;
@@ -192,15 +189,6 @@ body {
     background: linear-gradient(135deg, var(--primary-dark), var(--primary));
 }
 
-.search-button svg {
-    transition: transform 0.3s ease;
-}
-
-.search-button:hover svg {
-    transform: scale(1.1);
-}
-
-/* Features section */
 .features {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -242,7 +230,6 @@ body {
     line-height: 1.6;
 }
 
-/* Tracking page styles */
 .tracking-container {
     background: rgba(255,255,255,0.1);
     backdrop-filter: blur(10px);
@@ -253,7 +240,6 @@ body {
     box-shadow: var(--shadow-2xl);
 }
 
-/* Loading state */
 .loading-state {
     text-align: center;
     padding: 60px 20px;
@@ -273,12 +259,6 @@ body {
     to { transform: rotate(360deg); }
 }
 
-.loading-state p {
-    color: var(--white);
-    font-size: 16px;
-}
-
-/* Error state */
 .error-state {
     text-align: center;
     padding: 60px 20px;
@@ -317,7 +297,6 @@ body {
     box-shadow: var(--shadow-xl);
 }
 
-/* Success state (tracking info) */
 .tracking-header {
     margin-bottom: 40px;
     padding-bottom: 30px;
@@ -346,7 +325,6 @@ body {
     font-size: 16px;
 }
 
-/* Timeline */
 .timeline {
     margin-bottom: 40px;
 }
@@ -410,9 +388,9 @@ body {
 .timeline-desc {
     color: rgba(255,255,255,0.8);
     font-size: 14px;
+    white-space: pre-line;
 }
 
-/* Envío info */
 .envio-info {
     background: rgba(255,255,255,0.1);
     padding: 30px;
@@ -446,7 +424,6 @@ body {
     font-weight: 600;
 }
 
-/* WhatsApp support */
 .whatsapp-support {
     text-align: center;
     margin: 40px 0;
@@ -474,7 +451,6 @@ body {
     background: linear-gradient(135deg, #128C7E, #25D366);
 }
 
-/* Footer */
 .footer {
     text-align: center;
     color: rgba(255,255,255,0.6);
@@ -492,7 +468,6 @@ body {
     text-decoration: underline;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
     .hero-title {
         font-size: 36px;
@@ -533,7 +508,6 @@ body {
     }
 }
 
-/* Animaciones */
 @keyframes fadeIn {
     from {
         opacity: 0;
