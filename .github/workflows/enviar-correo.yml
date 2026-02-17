@@ -15,73 +15,65 @@ jobs:
       contains(github.event.issue.labels.*.name, '✅ Entregado')
     
     steps:
-      - name: Extraer email del JSON
+      - name: Extraer datos del JSON
         id: extract
         run: |
-          # Guardar el body del Issue en un archivo
+          # Guardar el body del Issue
           cat > issue_body.json << 'EOF'
           ${{ github.event.issue.body }}
           EOF
           
-          # Usar Python para extraer los datos
+          # Usar Python para extraer datos
           python3 << 'PYTHON_EOF'
           import json
           import os
           
           try:
-              # Leer el archivo JSON
+              # Leer el JSON
               with open('issue_body.json', 'r') as f:
-                  content = f.read()
+                  data = json.load(f)
               
-              # Limpiar y parsear
-              content = content.strip()
-              data = json.loads(content)
-              
-              # Extraer datos
               email = data.get('cliente', {}).get('email')
               nombre = data.get('cliente', {}).get('nombre', 'Cliente')
               tracking = '${{ github.event.issue.title }}'
               
               if not email:
-                  raise Exception("No se encontró email en el JSON")
+                  raise Exception("No se encontró email")
               
-              print(f"✅ Email: {email}")
-              print(f"✅ Nombre: {nombre}")
-              
-              # Guardar en GITHUB_ENV
-              with open(os.environ['GITHUB_ENV'], 'a') as env_file:
-                  env_file.write(f"EMAIL={email}\n")
-                  env_file.write(f"NOMBRE={nombre}\n")
-                  env_file.write(f"TRACKING={tracking}\n")
+              # Guardar datos básicos
+              with open(os.environ['GITHUB_ENV'], 'a') as env:
+                  env.write(f"EMAIL={email}\n")
+                  env.write(f"NOMBRE={nombre}\n")
+                  env.write(f"TRACKING={tracking}\n")
                   
-                  # Determinar estado por la etiqueta
+                  # Detectar etiquetas
                   labels = '${{ github.event.issue.labels.*.name }}'
+                  
+                  # Determinar asunto y mensaje según la etiqueta
                   if '📦 Recibido' in labels:
-                      env_file.write("ESTADO=recibido\n")
-                      env_file.write("MENSAJE_ESTADO=<p>Hemos recibido tu producto en nuestras oficinas. Pronto lo enviaremos a tu dirección.</p>\n")
+                      env.write("ASUNTO=📦 Tu pedido ha sido recibido\n")
+                      env.write("MENSAJE=<p>Hemos recibido tu producto en nuestras oficinas. Pronto lo enviaremos a tu dirección.</p>\n")
                   elif '🚚 Envío' in labels:
-                      env_file.write("ESTADO=enviado\n")
-                      env_file.write("MENSAJE_ESTADO=<p>¡Buenas noticias! Tu producto ya fue enviado a tu dirección.</p>\n")
+                      env.write("ASUNTO=🚚 Tu pedido está en camino\n")
+                      env.write("MENSAJE=<p>¡Buenas noticias! Tu producto ya fue enviado a tu dirección.</p>\n")
                   elif '✅ Entregado' in labels:
-                      env_file.write("ESTADO=entregado\n")
-                      env_file.write("MENSAJE_ESTADO=<p>Tu producto ha sido entregado exitosamente. Esperamos que lo disfrutes.</p>\n")
+                      env.write("ASUNTO=✅ Tu pedido fue entregado\n")
+                      env.write("MENSAJE=<p>Tu producto ha sido entregado exitosamente. Esperamos que lo disfrutes.</p>\n")
                   else:
-                      env_file.write("ESTADO=desconocido\n")
-                      env_file.write("MENSAJE_ESTADO=\n")
+                      env.write("ASUNTO=📦 Actualización de tu pedido\n")
+                      env.write("MENSAJE=<p>Tu pedido tiene una nueva actualización.</p>\n")
                   
                   # Si es comentario
                   if '${{ github.event_name }}' == 'issue_comment':
-                      env_file.write("TIPO_EVENTO=comentario\n")
+                      env.write("TIPO_EVENTO=comentario\n")
                       comentario = '''${{ github.event.comment.body }}'''
-                      # Limpiar el comentario
-                      comentario_limpio = comentario.replace('\\n', '\n').replace('\\', '')
-                      env_file.write(f"COMENTARIO={comentario_limpio}\n")
+                      env.write(f"COMENTARIO={comentario}\n")
                   else:
-                      env_file.write("TIPO_EVENTO=issue\n")
-                      env_file.write("COMENTARIO=\n")
+                      env.write("TIPO_EVENTO=issue\n")
+                      env.write("COMENTARIO=\n")
                       
           except Exception as e:
-              print(f"❌ Error: {e}")
+              print(f"Error: {e}")
               exit(1)
           PYTHON_EOF
       
@@ -96,11 +88,7 @@ jobs:
           secure: true
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: |
-            ${{ env.TIPO_EVENTO == 'comentario' && '📝 Actualización de tu pedido' ||
-               env.ESTADO == 'recibido' && '📦 Tu pedido ha sido recibido' ||
-               env.ESTADO == 'enviado' && '🚚 Tu pedido está en camino' ||
-               env.ESTADO == 'entregado' && '✅ Tu pedido fue entregado' }}
+          subject: ${{ env.ASUNTO }}
           to: ${{ env.EMAIL }}
           from: Maison Lumien Facturación
           html_body: |
@@ -128,7 +116,7 @@ jobs:
                     <div class="content">
                         <h2 style="color: #1F2937;">Hola ${{ env.NOMBRE }},</h2>
                         
-                        ${{ env.TIPO_EVENTO == 'comentario' && env.COMENTARIO != '' && '<p>Tu pedido tiene una nueva actualización:</p>' || env.MENSAJE_ESTADO }}
+                        ${{ env.MENSAJE }}
                         
                         ${{ env.TIPO_EVENTO == 'comentario' && env.COMENTARIO != '' && 
                            format('<div class="comentario"><p>{0}</p></div>', env.COMENTARIO) || '' }}
