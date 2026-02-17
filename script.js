@@ -1,4 +1,4 @@
-// script.js - Sistema de seguimiento Maison Lumien (VERSIÓN CORREGIDA)
+// script.js - Sistema de seguimiento Maison Lumien
 
 const GITHUB_USER = 'MaisonLumien';
 const GITHUB_REPO = 'maison-lumien-seguimiento';
@@ -22,7 +22,6 @@ async function consultarSeguimiento(trackingNumber) {
     try {
         console.log('🔍 Consultando tracking:', trackingNumber);
         
-        // Timeout de 5 segundos
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
         
@@ -39,7 +38,6 @@ async function consultarSeguimiento(trackingNumber) {
         const allIssues = await response.json();
         console.log('📦 Total issues encontrados:', allIssues.length);
         
-        // Buscar TODOS los issues con el título exacto
         const issuesEncontrados = allIssues.filter(i => i.title === trackingNumber);
         console.log('🎯 Issues con título coincidente:', issuesEncontrados.length);
         
@@ -47,23 +45,19 @@ async function consultarSeguimiento(trackingNumber) {
             return { success: false, error: 'No se encontró el número de seguimiento' };
         }
         
-        // Tomar el más reciente (por fecha de creación)
         const issue = issuesEncontrados.sort((a, b) => 
             new Date(b.created_at) - new Date(a.created_at)
         )[0];
         
         console.log('✅ Usando issue #' + issue.number);
         
-        // Parsear el JSON del cuerpo
         try {
             const data = JSON.parse(issue.body);
             
-            // Verificar que el JSON tenga la estructura esperada
             if (!data.cliente || !data.pedido || !data.envio || !data.historial) {
                 throw new Error('El JSON no tiene la estructura esperada');
             }
             
-            // Cargar comentarios si existen
             let comments = [];
             if (issue.comments > 0) {
                 const commentsUrl = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/issues/${issue.number}/comments`;
@@ -91,7 +85,6 @@ async function consultarSeguimiento(trackingNumber) {
 function mostrarSeguimiento(data, issue, comments) {
     const container = document.getElementById('successState');
     
-    // Obtener estado actual
     const estadoInfo = ESTADOS[data.envio.estado_actual] || { 
         icon: '📦', 
         label: data.envio.estado_actual.replace(/_/g, ' ') 
@@ -111,7 +104,7 @@ function mostrarSeguimiento(data, issue, comments) {
         <div class="timeline">
     `;
     
-    // Agregar historial (ordenado de más reciente a más antiguo)
+    // Historial del JSON
     const historialOrdenado = [...data.historial].sort(
         (a, b) => new Date(b.fecha) - new Date(a.fecha)
     );
@@ -133,17 +126,27 @@ function mostrarSeguimiento(data, issue, comments) {
         `;
     });
     
-    // Agregar comentarios como actualizaciones
+    // Comentarios como eventos
     if (comments && comments.length > 0) {
         comments.forEach(comment => {
-            // Ignorar comentarios que sean JSON
             if (!comment.body.includes('{') && comment.body.trim() !== '') {
+                
+                const fecha = new Date(comment.created_at);
+                const fechaFormateada = fecha.toLocaleString('es-CO', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
                 html += `
                     <div class="timeline-item">
-                        <div class="timeline-icon">💬</div>
-                        <div class="timeline-content">
-                            <div class="timeline-date">${new Date(comment.created_at).toLocaleString('es-CO')}</div>
-                            <div class="timeline-desc">${comment.body}</div>
+                        <div class="timeline-icon">📝</div>
+                        <div class="timeline-content" style="border-left-color: #25D366;">
+                            <div class="timeline-date">${fechaFormateada}</div>
+                            <div class="timeline-title">Actualización de Maison Lumien</div>
+                            <div class="timeline-desc" style="white-space: pre-line;">${comment.body}</div>
                         </div>
                     </div>
                 `;
@@ -237,7 +240,6 @@ async function initSeguimiento() {
     }
 }
 
-// Función para la página principal
 function initIndex() {
     const searchButton = document.getElementById('searchButton');
     const trackingInput = document.getElementById('trackingInput');
@@ -261,7 +263,6 @@ function initIndex() {
     }
 }
 
-// Inicializar según la página
 document.addEventListener('DOMContentLoaded', () => {
     if (window.location.pathname.includes('seguimiento.html')) {
         initSeguimiento();
