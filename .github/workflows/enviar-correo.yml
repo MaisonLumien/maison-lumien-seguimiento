@@ -15,37 +15,38 @@ jobs:
       contains(github.event.issue.labels.*.name, '✅ Entregado')
     
     steps:
-      - name: Extraer datos del Issue con Python (más confiable)
+      - name: Extraer datos del Issue
         id: extract
         run: |
           # Guardar el body en un archivo temporal
-          echo '${{ github.event.issue.body }}' > issue_body.json
+          cat > issue_body.json << 'EOF'
+          ${{ github.event.issue.body }}
+          EOF
           
-          # Usar Python para parsear el JSON correctamente
-          python3 << EOF
+          # Usar Python para parsear el JSON
+          python3 << 'EOF'
           import json
           import os
+          import re
           
           try:
               with open('issue_body.json', 'r') as f:
                   content = f.read()
               
-              # Limpiar el contenido (a veces viene con escapes)
-              content = content.strip().strip('"\'')
+              # Limpiar caracteres especiales
+              content = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', content)
               
               data = json.loads(content)
               
-              email = data.get('cliente', {}).get('email', '')
+              email = data.get('cliente', {}).get('email', 'stithvalle14@gmail.com')
               nombre = data.get('cliente', {}).get('nombre', 'Cliente')
               tracking = '${{ github.event.issue.title }}'
               
-              # Guardar en GITHUB_ENV
               with open(os.environ['GITHUB_ENV'], 'a') as env_file:
                   env_file.write(f"EMAIL={email}\n")
                   env_file.write(f"NOMBRE={nombre}\n")
                   env_file.write(f"TRACKING={tracking}\n")
                   
-                  # Determinar estado
                   labels = '${{ github.event.issue.labels.*.name }}'
                   if '📦 Recibido' in labels:
                       env_file.write("ESTADO=recibido\n")
@@ -53,21 +54,22 @@ jobs:
                       env_file.write("ESTADO=enviado\n")
                   elif '✅ Entregado' in labels:
                       env_file.write("ESTADO=entregado\n")
+                  else:
+                      env_file.write("ESTADO=recibido\n")
                   
-                  # Detectar si es comentario
                   if '${{ github.event_name }}' == 'issue_comment':
                       env_file.write("TIPO_EVENTO=comentario\n")
                       comentario = '''${{ github.event.comment.body }}'''
-                      # Limitar comentario a 100 chars para asunto
-                      comentario_corto = comentario[:100] + ('...' if len(comentario) > 100 else '')
-                      env_file.write(f"COMENTARIO={comentario}\n")
+                      # Limpiar caracteres problemáticos
+                      comentario_limpio = re.sub(r'[<>]', '', comentario)
+                      comentario_corto = comentario_limpio[:50] + ('...' if len(comentario_limpio) > 50 else '')
+                      env_file.write(f"COMENTARIO={comentario_limpio}\n")
                       env_file.write(f"COMENTARIO_CORTO={comentario_corto}\n")
                   else:
                       env_file.write("TIPO_EVENTO=issue\n")
                       
           except Exception as e:
-              print(f"Error procesando JSON: {e}")
-              # Email por defecto para debugging
+              print(f"Error: {e}")
               with open(os.environ['GITHUB_ENV'], 'a') as env_file:
                   env_file.write("EMAIL=stithvalle14@gmail.com\n")
                   env_file.write("NOMBRE=Cliente\n")
@@ -75,11 +77,6 @@ jobs:
                   env_file.write("TIPO_EVENTO=issue\n")
                   env_file.write("ESTADO=recibido\n")
           EOF
-          
-          # Debug: mostrar valores extraídos
-          echo "📧 Email extraído: ${{ env.EMAIL }}"
-          echo "👤 Nombre: ${{ env.NOMBRE }}"
-          echo "📦 Tracking: ${{ env.TRACKING }}"
       
       - name: Esperar a que GitHub Pages se actualice
         run: sleep 180
@@ -103,6 +100,7 @@ jobs:
             <!DOCTYPE html>
             <html>
             <head>
+                <meta charset="UTF-8">
                 <style>
                     body { font-family: 'Inter', sans-serif; background: #f5f5f5; padding: 20px; }
                     .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
@@ -110,7 +108,7 @@ jobs:
                     .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 300; }
                     .content { padding: 40px; }
                     .button { display: inline-block; background: linear-gradient(135deg, #4F46E5, #3730A3); color: white; text-decoration: none; padding: 15px 30px; border-radius: 8px; margin: 20px 0; }
-                    .comentario { background: #f0f0f0; padding: 20px; border-radius: 8px; border-left: 4px solid #4F46E5; margin: 20px 0; white-space: pre-line; }
+                    .comentario { background: #f0f0f0; padding: 20px; border-radius: 8px; border-left: 4px solid #4F46E5; margin: 20px 0; white-space: pre-wrap; font-family: monospace; }
                     .fecha { color: #666; font-size: 12px; margin-bottom: 5px; }
                 </style>
             </head>
