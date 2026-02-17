@@ -15,31 +15,33 @@ jobs:
       contains(github.event.issue.labels.*.name, '✅ Entregado')
     
     steps:
-      - name: Extraer datos del Issue
+      - name: Extraer datos del Issue con Python
         id: extract
         run: |
-          # Guardar el body en un archivo temporal
-          cat > issue_body.json << 'EOF'
-          ${{ github.event.issue.body }}
-          EOF
+          # Crear un archivo temporal para el body
+          cat > issue_body.json << 'ISSUE_EOF'
+          ${{ toJSON(github.event.issue.body) }}
+          ISSUE_EOF
           
-          # Usar Python para parsear el JSON
-          python3 << 'EOF'
+          python3 << 'PYTHON_EOF'
           import json
           import os
           import re
           
           try:
+              # Leer el body del issue
               with open('issue_body.json', 'r') as f:
-                  content = f.read()
+                  content = f.read().strip().strip('"')
               
-              # Limpiar caracteres especiales
-              content = re.sub(r'[\x00-\x1f\x7f-\x9f]', '', content)
+              # Decodificar caracteres especiales
+              content = bytes(content, 'utf-8').decode('unicode_escape')
               
-              data = json.loads(content)
+              # Extraer datos con regex (más seguro que parsear JSON completo)
+              email_match = re.search(r'"email":"([^"]+)"', content)
+              nombre_match = re.search(r'"nombre":"([^"]+)"', content)
               
-              email = data.get('cliente', {}).get('email', 'stithvalle14@gmail.com')
-              nombre = data.get('cliente', {}).get('nombre', 'Cliente')
+              email = email_match.group(1) if email_match else 'stithvalle14@gmail.com'
+              nombre = nombre_match.group(1) if nombre_match else 'Cliente'
               tracking = '${{ github.event.issue.title }}'
               
               with open(os.environ['GITHUB_ENV'], 'a') as env_file:
@@ -47,6 +49,7 @@ jobs:
                   env_file.write(f"NOMBRE={nombre}\n")
                   env_file.write(f"TRACKING={tracking}\n")
                   
+                  # Determinar estado por labels
                   labels = '${{ github.event.issue.labels.*.name }}'
                   if '📦 Recibido' in labels:
                       env_file.write("ESTADO=recibido\n")
@@ -57,12 +60,20 @@ jobs:
                   else:
                       env_file.write("ESTADO=recibido\n")
                   
+                  # Si es un comentario
                   if '${{ github.event_name }}' == 'issue_comment':
                       env_file.write("TIPO_EVENTO=comentario\n")
+                      
+                      # Obtener el comentario y escaparlo para JSON
                       comentario = '''${{ github.event.comment.body }}'''
-                      # Limpiar caracteres problemáticos
-                      comentario_limpio = re.sub(r'[<>]', '', comentario)
+                      # Escapar para JSON
+                      comentario_json = json.dumps(comentario)
+                      # Quitar las comillas externas
+                      comentario_limpio = comentario_json[1:-1]
+                      
+                      # Primeros 50 caracteres para el asunto
                       comentario_corto = comentario_limpio[:50] + ('...' if len(comentario_limpio) > 50 else '')
+                      
                       env_file.write(f"COMENTARIO={comentario_limpio}\n")
                       env_file.write(f"COMENTARIO_CORTO={comentario_corto}\n")
                   else:
@@ -76,7 +87,7 @@ jobs:
                   env_file.write("TRACKING=${{ github.event.issue.title }}\n")
                   env_file.write("TIPO_EVENTO=issue\n")
                   env_file.write("ESTADO=recibido\n")
-          EOF
+          PYTHON_EOF
       
       - name: Esperar a que GitHub Pages se actualice
         run: sleep 180
@@ -108,7 +119,7 @@ jobs:
                     .header h1 { color: white; margin: 0; font-size: 28px; font-weight: 300; }
                     .content { padding: 40px; }
                     .button { display: inline-block; background: linear-gradient(135deg, #4F46E5, #3730A3); color: white; text-decoration: none; padding: 15px 30px; border-radius: 8px; margin: 20px 0; }
-                    .comentario { background: #f0f0f0; padding: 20px; border-radius: 8px; border-left: 4px solid #4F46E5; margin: 20px 0; white-space: pre-wrap; font-family: monospace; }
+                    .comentario { background: #f0f0f0; padding: 20px; border-radius: 8px; border-left: 4px solid #4F46E5; margin: 20px 0; white-space: pre-wrap; font-family: 'Courier New', monospace; }
                     .fecha { color: #666; font-size: 12px; margin-bottom: 5px; }
                 </style>
             </head>
