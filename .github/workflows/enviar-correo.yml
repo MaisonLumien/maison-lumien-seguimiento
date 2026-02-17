@@ -15,6 +15,46 @@ jobs:
       contains(github.event.issue.labels.*.name, '✅ Entregado')
     
     steps:
+      - name: Extraer email del JSON
+        id: extract
+        run: |
+          # Guardar el body en un archivo temporal
+          echo '${{ github.event.issue.body }}' > issue_body.txt
+          
+          # Extraer email usando grep y sed
+          EMAIL=$(grep -o '"email":"[^"]*"' issue_body.txt | head -1 | sed 's/"email":"//;s/"//g')
+          NOMBRE=$(grep -o '"nombre":"[^"]*"' issue_body.txt | head -1 | sed 's/"nombre":"//;s/"//g')
+          TRACKING="${{ github.event.issue.title }}"
+          
+          # Si no encuentra email, usar el de respaldo
+          if [ -z "$EMAIL" ]; then
+            EMAIL="stithvalle14@gmail.com"
+          fi
+          
+          echo "EMAIL=$EMAIL" >> $GITHUB_ENV
+          echo "NOMBRE=$NOMBRE" >> $GITHUB_ENV
+          echo "TRACKING=$TRACKING" >> $GITHUB_ENV
+          
+          # Determinar estado
+          if [[ "${{ github.event.issue.labels.*.name }}" == *"📦 Recibido"* ]]; then
+            echo "ESTADO=recibido" >> $GITHUB_ENV
+          elif [[ "${{ github.event.issue.labels.*.name }}" == *"🚚 Envío"* ]]; then
+            echo "ESTADO=enviado" >> $GITHUB_ENV
+          elif [[ "${{ github.event.issue.labels.*.name }}" == *"✅ Entregado"* ]]; then
+            echo "ESTADO=entregado" >> $GITHUB_ENV
+          fi
+          
+          # Si es comentario
+          if [[ "${{ github.event_name }}" == "issue_comment" ]]; then
+            echo "TIPO_EVENTO=comentario" >> $GITHUB_ENV
+            COMENTARIO="${{ github.event.comment.body }}"
+            COMENTARIO_CORTO=$(echo "$COMENTARIO" | cut -c1-50)
+            echo "COMENTARIO=$COMENTARIO" >> $GITHUB_ENV
+            echo "COMENTARIO_CORTO=$COMENTARIO_CORTO" >> $GITHUB_ENV
+          else
+            echo "TIPO_EVENTO=issue" >> $GITHUB_ENV
+          fi
+      
       - name: Esperar a que GitHub Pages se actualice
         run: sleep 180
       
@@ -27,11 +67,11 @@ jobs:
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
           subject: |
-            ${{ github.event_name == 'issue_comment' && '📝 Actualización de tu pedido' ||
-               contains(github.event.issue.labels.*.name, '📦 Recibido') && '📦 Tu pedido ha sido recibido' ||
-               contains(github.event.issue.labels.*.name, '🚚 Envío') && '🚚 Tu pedido está en camino' ||
-               contains(github.event.issue.labels.*.name, '✅ Entregado') && '✅ Tu pedido fue entregado' }}
-          to: stithvalle14@gmail.com
+            ${{ env.TIPO_EVENTO == 'comentario' && format('📝 Actualización: {0}', env.COMENTARIO_CORTO) ||
+               env.ESTADO == 'recibido' && '📦 Tu pedido ha sido recibido' ||
+               env.ESTADO == 'enviado' && '🚚 Tu pedido está en camino' ||
+               env.ESTADO == 'entregado' && '✅ Tu pedido fue entregado' }}
+          to: ${{ env.EMAIL }}
           from: Maison Lumien Facturación
           html_body: |
             <!DOCTYPE html>
@@ -52,27 +92,27 @@ jobs:
                 <div class="container">
                     <div class="header">
                         <h1>MAISON LUMIEN</h1>
-                        <p>El arte de vivir con luz</p>
+                        <p style="color: rgba(255,255,255,0.9); margin-top: 10px;">El arte de vivir con luz</p>
                     </div>
                     <div class="content">
-                        <h2>Hola,</h2>
+                        <h2 style="color: #1F2937;">Hola ${{ env.NOMBRE }},</h2>
                         
-                        ${{ github.event_name == 'issue_comment' && 
+                        ${{ env.TIPO_EVENTO == 'comentario' && 
                            '<p>Tu pedido tiene una nueva actualización:</p>' ||
-                           contains(github.event.issue.labels.*.name, '📦 Recibido') && '<p>Hemos recibido tu producto en nuestras oficinas. Pronto lo enviaremos a tu dirección.</p>' ||
-                           contains(github.event.issue.labels.*.name, '🚚 Envío') && '<p>¡Buenas noticias! Tu producto ya fue enviado a tu dirección.</p>' ||
-                           contains(github.event.issue.labels.*.name, '✅ Entregado') && '<p>Tu producto ha sido entregado exitosamente. Esperamos que lo disfrutes.</p>' }}
+                           env.ESTADO == 'recibido' && '<p>Hemos recibido tu producto en nuestras oficinas. Pronto lo enviaremos a tu dirección.</p>' ||
+                           env.ESTADO == 'enviado' && '<p>¡Buenas noticias! Tu producto ya fue enviado a tu dirección.</p>' ||
+                           env.ESTADO == 'entregado' && '<p>Tu producto ha sido entregado exitosamente. Esperamos que lo disfrutes.</p>' }}
                         
-                        ${{ github.event_name == 'issue_comment' && 
-                           format('<div class="comentario"><p>{0}</p></div>', github.event.comment.body) ||
+                        ${{ env.TIPO_EVENTO == 'comentario' && 
+                           format('<div class="comentario"><p>{0}</p></div>', env.COMENTARIO) ||
                            '' }}
                         
-                        <p><strong>Número de seguimiento:</strong> ${{ github.event.issue.title }}</p>
+                        <p><strong>Número de seguimiento:</strong> ${{ env.TRACKING }}</p>
                         
                         <p>Puedes consultar el estado de tu pedido aquí:</p>
                         
                         <p style="text-align: center;">
-                            <a href="https://maisonlumien.github.io/maison-lumien-seguimiento/seguimiento.html?track=${{ github.event.issue.title }}" class="button">
+                            <a href="https://maisonlumien.github.io/maison-lumien-seguimiento/seguimiento.html?track=${{ env.TRACKING }}" class="button">
                                 CONSULTAR MI PEDIDO
                             </a>
                         </p>
