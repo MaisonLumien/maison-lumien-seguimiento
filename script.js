@@ -93,7 +93,10 @@ function mostrarSeguimiento(data, issue, comments) {
     let html = `
         <div class="tracking-header">
             <div class="tracking-number">
-                ${data.envio.tracking}
+                <span style="font-size: 14px; color: rgba(255,255,255,0.7); display: block; margin-bottom: 5px;">
+                    Número de seguimiento:
+                </span>
+                ${data.envio.tracking_aliexpress}
                 <span>${estadoInfo.icon} ${estadoInfo.label}</span>
             </div>
             <div class="cliente-info">
@@ -174,8 +177,8 @@ function mostrarSeguimiento(data, issue, comments) {
                     <span class="info-value">${data.pedido.numero}</span>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Tracking</span>
-                    <span class="info-value">${data.envio.tracking}</span>
+                    <span class="info-label">Número de seguimiento</span>
+                    <span class="info-value">${data.envio.tracking_aliexpress}</span>
                 </div>
     `;
     
@@ -270,5 +273,3 @@ document.addEventListener('DOMContentLoaded', () => {
         initIndex();
     }
 });
-
-
