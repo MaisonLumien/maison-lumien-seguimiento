@@ -174,7 +174,7 @@ function mostrarSeguimiento(data, issue, comments) {
                     <span class="info-value">${data.pedido.numero}</span>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">Tracking AliExpress</span>
+                    <span class="info-label">Tracking</span>
                     <span class="info-value">${data.envio.tracking_aliexpress}</span>
                 </div>
     `;
@@ -270,3 +270,4 @@ document.addEventListener('DOMContentLoaded', () => {
         initIndex();
     }
 });
+
