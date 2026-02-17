@@ -4,7 +4,7 @@ on:
   issues:
     types: [opened, edited]
   issue_comment:
-    types: [created]  # 🔥 NUEVO: Se activa cuando agregas un comentario
+    types: [created]
 
 jobs:
   send-email:
@@ -27,7 +27,6 @@ jobs:
           echo "NOMBRE=$NOMBRE" >> $GITHUB_ENV
           echo "TRACKING=$TRACKING" >> $GITHUB_ENV
           
-          # Determinar estado (para el asunto del correo)
           if [[ "${{ github.event.issue.labels.*.name }}" == *"📦 Recibido"* ]]; then
             echo "ESTADO=recibido" >> $GITHUB_ENV
           elif [[ "${{ github.event.issue.labels.*.name }}" == *"🚚 Envío"* ]]; then
@@ -36,11 +35,9 @@ jobs:
             echo "ESTADO=entregado" >> $GITHUB_ENV
           fi
           
-          # 🔥 NUEVO: Detectar si es un comentario
           if [[ "${{ github.event_name }}" == "issue_comment" ]]; then
             echo "TIPO_EVENTO=comentario" >> $GITHUB_ENV
             COMENTARIO="${{ github.event.comment.body }}"
-            # Limitar el comentario a 100 caracteres para el asunto
             COMENTARIO_CORTO=$(echo "$COMENTARIO" | cut -c1-100)
             echo "COMENTARIO=$COMENTARIO" >> $GITHUB_ENV
             echo "COMENTARIO_CORTO=$COMENTARIO_CORTO" >> $GITHUB_ENV
@@ -48,7 +45,6 @@ jobs:
             echo "TIPO_EVENTO=issue" >> $GITHUB_ENV
           fi
       
-      # Esperar 3 minutos para que GitHub Pages se actualice
       - name: Esperar a que GitHub Pages se actualice
         run: sleep 180
       
