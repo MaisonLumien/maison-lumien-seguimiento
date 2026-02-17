@@ -52,7 +52,10 @@ async function consultarSeguimiento(trackingNumber) {
         console.log('✅ Usando issue #' + issue.number);
         
         try {
-            const data = JSON.parse(issue.body);
+            // CORREGIDO: Reemplazar "descripción" con acento por "descripcion" sin acento
+            let bodyCorregido = issue.body.replace(/"descripción":/g, '"descripcion":');
+            
+            const data = JSON.parse(bodyCorregido);
             
             if (!data.cliente || !data.pedido || !data.envio || !data.historial) {
                 throw new Error('El JSON no tiene la estructura esperada');
@@ -107,7 +110,7 @@ function mostrarSeguimiento(data, issue, comments) {
         <div class="timeline">
     `;
     
-    // Historial del JSON
+    // Historial del JSON - ORDEN DESCENDENTE (más reciente primero)
     const historialOrdenado = [...data.historial].sort(
         (a, b) => new Date(b.fecha) - new Date(a.fecha)
     );
@@ -129,9 +132,13 @@ function mostrarSeguimiento(data, issue, comments) {
         `;
     });
     
-    // Comentarios como eventos
+    // Comentarios como eventos - ORDEN DESCENDENTE (más reciente primero)
     if (comments && comments.length > 0) {
-        comments.forEach(comment => {
+        const commentsOrdenados = [...comments].sort(
+            (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        );
+        
+        commentsOrdenados.forEach(comment => {
             if (!comment.body.includes('{') && comment.body.trim() !== '') {
                 
                 const fecha = new Date(comment.created_at);
@@ -182,7 +189,8 @@ function mostrarSeguimiento(data, issue, comments) {
                 </div>
     `;
     
-    if (data.reenvio.transportadora) {
+    // AHORA SÍ APARECERÁ LA TRANSPORTADORA LOCAL
+    if (data.reenvio && data.reenvio.transportadora && data.reenvio.transportadora.trim() !== '') {
         html += `
                 <div class="info-item">
                     <span class="info-label">Transportadora local</span>
