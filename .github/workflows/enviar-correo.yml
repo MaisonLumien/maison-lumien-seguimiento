@@ -21,7 +21,6 @@ jobs:
           # Extraer email y nombre usando Python
           python3 << 'PYTHON_EOF'
           import os
-          import json
           import re
           
           # Obtener el body del issue
@@ -59,9 +58,6 @@ jobs:
                   # Limpiar el comentario
                   comentario_limpio = comentario.replace('\\n', '\n').replace('\\"', '"')
                   comentario_corto = comentario_limpio[:50] + ('...' if len(comentario_limpio) > 50 else '')
-                  
-                  # Escapar para JSON
-                  comentario_json = json.dumps(comentario_limpio)
                   
                   f.write(f"COMENTARIO={comentario_limpio}\n")
                   f.write(f"COMENTARIO_CORTO={comentario_corto}\n")
@@ -123,7 +119,7 @@ jobs:
                            env.ESTADO == 'entregado' && '<p>Tu producto ha sido entregado exitosamente. Esperamos que lo disfrutes.</p>' }}
                         
                         ${{ env.TIPO_EVENTO == 'comentario' && 
-                           '<div class="comentario"><div class="fecha">' + env.FECHA_COMENTARIO + '</div><p>' + env.COMENTARIO + '</p></div>' ||
+                           format('<div class="comentario"><div class="fecha">{0}</div><p>{1}</p></div>', env.FECHA_COMENTARIO, env.COMENTARIO) ||
                            '' }}
                         
                         <p><strong>Número de seguimiento:</strong> ${{ env.TRACKING }}</p>
